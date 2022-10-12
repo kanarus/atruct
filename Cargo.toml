@@ -1,0 +1,6 @@
+[workspace]
+members = [
+    "atruct_macro",
+    "atruct_internal",
+    "tester"
+]
