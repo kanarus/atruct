@@ -1,70 +1,67 @@
-use proc_macro2::{TokenStream, token_stream, TokenTree, Punct, Ident};
-use quote::{quote, TokenStreamExt};
-use syn::{Token, token, parse::{Parse, ParseStream}, Expr, parse};
-// use syn::{parse2,  DeriveInput};
+use proc_macro2::{TokenStream, Ident};
+use syn::{Token, token::{Comma, Colon}, parse::{Parse, ParseStream}, parse, braced, punctuated::Punctuated, ExprLit, Lit};
 
-pub struct KeyValue {
-    pub key: Ident,
-    pub colon: Token!(:),
-    // pub string: Option<syn::LitStr>,
-    // pub num: Option<syn::LitInt>,
-    pub value: syn::ExprLit,
-    pub comma: Option<Token!(,)>,
-} impl Parse for KeyValue {
+mod parser; use parser::StructList;
+mod builder; use builder::build_token_stream;
+
+
+struct Atruct {
+    fields: Punctuated<Field, Comma>,
+} impl Parse for Atruct {
     fn parse(input: ParseStream) -> syn::Result<Self> {
-        Ok(KeyValue {
-            key: input.parse()?,
-            colon: input.parse()?,
-            // string: input.parse()?,
-            // num: input.parse()?,
-
-            value: input.parse()?,
-            comma: input.parse()?,
+        Ok(Atruct {
+            fields: input.parse_terminated(Field::parse)?
+        })
+    }
+}
+pub struct Field {
+    name: Ident,
+    _colon: Colon,
+    literal: Option<Lit>,
+    // _brace: Option<token::Brace>,// Option<token::Brace>,
+    // nest: Option<Punctuated<Field, Comma>>,
+} impl Parse for Field {
+    fn parse(input: ParseStream) -> syn::Result<Self> {
+        // let content;
+        Ok(Field {
+            name: input.parse()?,
+            _colon: input.parse()?,
+            literal: input.parse().ok(),
+            // _brace: input., // braced!(content in input),
+            // nest: if input.peek(token::Brace) {
+            //         let _ = braced!(content in input);
+            //         content.parse_terminated(Field::parse).ok()
+            //     } else {
+            //         None
+            //     }
         })
     }
 }
 
-pub  struct KeyValues(Vec<KeyValue>);
-impl Parse for KeyValues {
-    fn parse(input: ParseStream) -> syn::Result<Self> {
-        let mut key_values = KeyValues(vec![]);
-
-        while !input.is_empty() {
-            key_values.0.push(input.parse::<KeyValue>()?)    
-        }
-
-        Ok(key_values)
-    }
+pub fn atruct(stream: TokenStream) -> TokenStream {
+    let atruct: Atruct = parse(stream.into()).expect("failed to parse input to Atruct");
+    let struct_list = StructList::from_fields(atruct.fields);
+    build_token_stream(struct_list)
 }
 
-pub fn atruct(stream: TokenStream) -> TokenStream {
 
-    let kvs: KeyValues = parse(stream.into()).expect("line 42");
+#[cfg(test)]
+mod test {
+    use proc_macro2::{TokenStream, TokenTree, Group};
+    use syn::parse::{ParseStream, ParseBuffer, self};
 
-    let mut struct_def = TokenStream::new();
-    let mut instance = TokenStream::new();
+    use crate::Atruct;
 
-    struct_def.extend(quote!());
+    #[test]
+    fn interface_a_1() {
+        let case = {
+            let mut case = TokenStream::new();
 
-    for kv in kvs.0 {
-        let key = kv.key;
-        let value = kv.value;
-
-        struct_def.extend(match &value.lit {
-            syn::Lit::Str(str) => quote!(#key: &'static str, ),
-            syn::Lit::Int(int) => quote!(#key: isize, ),
-            syn::Lit::Float(float) => quote!(#key: f64, ),
-            syn::Lit::Bool(bool) => quote!(#key: bool, ),
-            _ => panic!("i don't support it")
-        });
-        instance.extend(
-            quote!(#key: #value, )
-        );
+            case
+        };
+        assert_eq!(
+            syn::parse::<Atruct>(case).unwrap(),
+            Atruct {}
+        )
     }
-
-    quote!({
-        struct S1 {#struct_def}
-        S1 {#instance}
-    })
-    
 }
