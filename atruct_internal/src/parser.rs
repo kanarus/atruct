@@ -5,15 +5,15 @@ use syn::{punctuated::Punctuated, token::{Comma, Colon, self}, Lit, Type, Token}
 use crate::{Field, builder::wrapping_name};
 
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct StructMap(
     HashMap</*struct id*/String, Struct>
 );
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Struct(
     HashMap<Ident/*field name*/, Value>
 );
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Value {
     Int(isize),
     Bool(bool),
@@ -35,6 +35,10 @@ impl StructMap {
     }
     pub fn from_map(map: HashMap<String, Struct>) -> Self {
         StructMap(map)
+    }
+
+    pub fn get(&self, id: &String) -> &Struct {
+        self.0.get(id).expect("not found Struct")
     }
 }
 impl Iterator for StructMap {
@@ -68,6 +72,16 @@ impl Value {
             Bool(_) =>  quote!(bool),
             Str(_) =>  quote!(&'static str),
             Struct(id) => wrapping_name(id)
+        }
+    }
+    pub fn unwrap_literal_as_token(&self) -> TokenStream {
+        use Value::*;
+        match self {
+            Int(v) => quote!(#v),
+            Float(v) => quote!(#v),
+            Bool(v) =>  quote!(#v),
+            Str(v) =>  quote!(#v),
+            Struct(_) => unreachable!("fn unwrap_literal_as_token is unexpectedly given Value::Struct")
         }
     }
 }

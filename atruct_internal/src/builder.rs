@@ -1,11 +1,23 @@
+use std::{iter::Cloned, rc::Rc};
+
 use proc_macro2::{TokenStream, Ident};
 use quote::{quote, format_ident};
-use crate::parser::StructMap;
+use syn::token;
+use crate::parser::{StructMap, Value};
 
 
 pub fn build_token_stream(structs: StructMap) -> TokenStream {
+    let defs = build_struct_defs(structs.clone());
+    let instance = build_struct_instance(structs);
+
+    quote!({
+        #defs
+        #instance
+    })
+}
+
+fn build_struct_defs(structs: StructMap) -> TokenStream {
     let mut defs = TokenStream::new();
-    let mut instance = TokenStream::new();
 
     for (id, s) in structs {
         let wrapping_name = wrapping_name(&id);
@@ -20,10 +32,40 @@ pub fn build_token_stream(structs: StructMap) -> TokenStream {
         ));
     }
 
-    quote!({
-        #defs
-        #instance
-    })
+    defs
+}
+
+fn build_struct_instance(structs: StructMap) -> TokenStream {
+    // let mut instance = TokenStream::new();
+    build_struct_instance_inner(&structs, &"0".into(), &mut TokenStream::new())// &mut instance)
+}
+fn build_struct_instance_inner(
+    structs: &StructMap,
+    id: &String,
+    // current_instance: &mut TokenStream
+    current_instance: &mut TokenStream
+) -> TokenStream {
+    let wrapping_name = wrapping_name(id);
+
+    let mut fields = TokenStream::new();
+    let target = structs.get(id);
+    for (name, value) in target.fields() {
+        fields.extend(quote!(#name: ));
+        match value {
+            Value::Struct(next_id) => {
+                let next_struct = build_struct_instance_inner(
+                    structs, next_id, current_instance
+                );
+                fields.extend(quote!(#next_struct,))
+            }
+            other => {
+                let literal_token = other.unwrap_literal_as_token();
+                fields.extend(quote!(#literal_token,))
+            }
+        }
+    }
+
+    quote!(#wrapping_name {#fields})
 }
 
 pub fn wrapping_name(id: &String) -> TokenStream {
