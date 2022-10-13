@@ -1,5 +1,5 @@
-use proc_macro2::TokenStream;
-use quote::quote;
+use proc_macro2::{TokenStream, Ident};
+use quote::{quote, format_ident};
 use crate::parser::StructList;
 
 
@@ -8,7 +8,7 @@ pub fn build_token_stream(structs: StructList) -> TokenStream {
     let mut instance = TokenStream::new();
 
     for s in structs {
-        let wrapping_name = wrapping_name(s.id);
+        let wrapping_name = wrapping_name(&s.id);
 
         let mut field_defs = TokenStream::new();
         for (ident, value) in s.fields.iter() {
@@ -16,7 +16,7 @@ pub fn build_token_stream(structs: StructList) -> TokenStream {
             field_defs.extend(quote!(#ident: #type_name, ));
         }
         defs.extend(quote!(
-            #wrapping_name {#field_defs}
+            struct #wrapping_name {#field_defs}
         ));
     }
 
@@ -26,6 +26,37 @@ pub fn build_token_stream(structs: StructList) -> TokenStream {
     })
 }
 
-pub fn wrapping_name(id: usize) -> String {
-    format!("S{id}")
+pub fn wrapping_name(id: &String) -> TokenStream {
+    let name = format_ident!("S_{}", id.clone());
+    quote!(#name)
+}
+
+
+#[cfg(test)]
+mod test {
+    use std::collections::HashMap;
+    use proc_macro2::{Ident, Span};
+    use quote::quote;
+    use crate::parser::{StructList, Struct, Value};
+    use super::build_token_stream;
+
+    #[test]
+    fn build_a_1() {
+        let case = StructList(vec![
+            Struct {
+                id: "0".to_owned(),
+                fields: HashMap::from([
+                    (Ident::new("a", Span::call_site()),
+                    Value::Int(1)),
+                ])
+            }
+        ]);
+
+        assert_eq!(
+            build_token_stream(case).to_string(),
+            quote!(
+                {struct S0 {a: isize, }}
+            ).to_string()
+        )
+    }
 }

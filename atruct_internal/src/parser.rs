@@ -1,16 +1,17 @@
 use std::collections::HashMap;
-use proc_macro2::Ident;
-use syn::{punctuated::Punctuated, token::{Comma, Colon}, Lit};
+use proc_macro2::{Ident, TokenStream};
+use quote::{format_ident, quote};
+use syn::{punctuated::Punctuated, token::{Comma, Colon, self}, Lit, Type, Token};
 use crate::{Field, builder::wrapping_name};
 
 
 #[derive(Debug, PartialEq)]
 pub struct StructList(
-    Vec<Struct>
+    pub Vec<Struct>
 );
 #[derive(Debug, PartialEq)]
 pub struct Struct{
-    pub id: usize,
+    pub id: String,
     pub fields: HashMap<Ident/*field name*/, Value>
 }
 #[derive(Debug, PartialEq)]
@@ -19,18 +20,18 @@ pub enum Value {
     Bool(bool),
     Float(f64),
     Str(String),
-    Struct(usize/*id; pointer to another Struct in the StructList*/)
+    Struct(String/*id; pointer to another Struct in the StructList*/)
 }
 
 impl StructList {
     pub fn from_fields(fields: Punctuated<Field, Comma>) -> Self {
         let mut list = vec![];
-        let init_id = 0;
+        let init_id = "0".to_owned();
         
         parse_fields(init_id, fields, &mut list);
 
-        list.sort_unstable_by_key(|s| s.id);
-        list.reverse();
+        // list.sort_unstable_by_key(|s| s.id);
+        // list.reverse();
         StructList(list)
     }
 }
@@ -42,21 +43,21 @@ impl Iterator for StructList {
 }
 
 impl Value {
-    pub fn get_type(&self) -> String {
+    pub fn get_type(&self) -> TokenStream {
         use Value::*;
         match self {
-            Int(_) => "isize".to_owned(),
-            Float(_) => "f64".to_owned(),
-            Bool(_) => "bool".to_owned(),
-            Str(_) => "&'static str".to_owned(),
-            Struct(id) => wrapping_name(*id)
+            Int(_) => quote!(isize),
+            Float(_) => quote!(f64),
+            Bool(_) =>  quote!(bool),
+            Str(_) =>  quote!(&'static str),
+            Struct(id) => wrapping_name(id)
         }
     }
 }
 
 
 fn parse_fields(
-    id: usize,
+    id: String,
     fields: Punctuated<Field, Comma>,
     struct_list: &mut Vec<Struct>,
 ) {
@@ -80,15 +81,15 @@ fn parse_fields(
                 _ => panic!("unsupported literal")
             });
 
-        // } else if field.nest.is_some() {
-        //     let fields = field.nest.unwrap();
-        // 
-        //     let next_struct_id = id + struct_fileds_count;
-        //     map.insert(field_ident, Value::Struct(next_struct_id));
-        // 
-        //     parse_fields(next_struct_id, fields, struct_list);
-        //     struct_fileds_count += 1;
-        // 
+        } else if field.nest.is_some() {
+            struct_fileds_count += 1;
+            let fields = field.nest.unwrap();
+        
+            let next_struct_id = format!("{id}_{struct_fileds_count}");
+            map.insert(field_ident, Value::Struct(next_struct_id.clone()));
+        
+            parse_fields(next_struct_id, fields, struct_list);
+        
         } else {
             panic!("no value is given")
         }
@@ -112,14 +113,15 @@ mod test {
             Field {
                 name: Ident::new("a", Span::call_site()),
                 _colon: Colon { spans: [Span::call_site()] },
-                literal: Some(Lit::Int(LitInt::new("1", Span::call_site())))
+                literal: Some(Lit::Int(LitInt::new("1", Span::call_site()))),
+                nest: None,
             }
         ]);
         assert_eq!(
             StructList::from_fields(case),
             StructList(vec![
                 Struct {
-                    id: 0,
+                    id: "0".to_owned(),
                     fields: HashMap::from([
                         (Ident::new("a", Span::call_site()),
                         Value::Int(1)),
@@ -134,19 +136,21 @@ mod test {
             Field {
                 name: Ident::new("a", Span::call_site()),
                 _colon: Colon { spans: [Span::call_site()] },
-                literal: Some(Lit::Int(LitInt::new("1", Span::call_site())))
+                literal: Some(Lit::Int(LitInt::new("1", Span::call_site()))),
+                nest: None
             },
             Field {
                 name: Ident::new("b", Span::call_site()),
                 _colon: Colon { spans: [Span::call_site()] },
-                literal: Some(Lit::Str(LitStr::new("string", Span::call_site())))
+                literal: Some(Lit::Str(LitStr::new("string", Span::call_site()))),
+                nest: None
             }
         ]);
         assert_eq!(
             StructList::from_fields(case),
             StructList(vec![
                 Struct {
-                    id: 0,
+                    id: "0".to_owned(),
                     fields: HashMap::from([
                         (Ident::new("a", Span::call_site()), Value::Int(1)),
                         (Ident::new("b", Span::call_site()), Value::Str("string".to_owned())),
