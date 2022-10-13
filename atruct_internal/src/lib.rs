@@ -1,7 +1,7 @@
 use proc_macro2::{TokenStream, Ident};
 use syn::{Token, token::{Comma, Colon, Brace}, parse::{Parse, ParseStream}, parse, braced, punctuated::Punctuated, ExprLit, Lit};
 
-mod parser; use parser::StructList;
+mod parser; use parser::StructMap;
 mod builder; use builder::build_token_stream;
 
 
@@ -40,6 +40,6 @@ pub struct Field {
 
 pub fn atruct(stream: TokenStream) -> TokenStream {
     let atruct: Atruct = parse(stream.into()).expect("failed to parse input to Atruct");
-    let struct_list = StructList::from_fields(atruct.fields);
-    build_token_stream(struct_list)
+    let struct_map = StructMap::from_fields(atruct.fields);
+    build_token_stream(struct_map)
 }
