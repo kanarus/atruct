@@ -17,7 +17,7 @@ fn build_struct_defs(structs: StructMap) -> TokenStream {
     let mut defs = TokenStream::new();
 
     for (id, s) in structs {
-        let wrapping_name = wrapping_name(&id);
+        let wrapping_name = if &id == "0" {quote!(Atruct)} else {wrapping_name(&id)};
 
         let mut field_defs = TokenStream::new();
         for (ident, value) in s.fields() {
@@ -40,7 +40,7 @@ fn build_struct_instance_inner(
     id: &String,
     current_instance: &mut TokenStream
 ) -> TokenStream {
-    let wrapping_name = wrapping_name(id);
+    let wrapping_name = if id == "0" {quote!(Atruct)} else {wrapping_name(&id)};
 
     let mut fields = TokenStream::new();
     let target = structs.get(id);
