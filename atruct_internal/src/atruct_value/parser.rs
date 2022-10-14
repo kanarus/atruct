@@ -1,9 +1,45 @@
 use std::collections::{HashMap, hash_map::Iter};
 use proc_macro2::{Ident, TokenStream};
-use quote::{format_ident, quote};
-use syn::{punctuated::Punctuated, token::{Comma, Colon, self}, Lit, Type, Token};
-use crate::{Field, builder::wrapping_name};
+use quote::quote;
+use syn::{punctuated::Punctuated, token::{Comma, Colon, Brace}, Lit, parse::{Parse, ParseStream}, braced};
+use crate::atruct_value::builder::wrapping_name;
 
+
+pub struct Atruct {
+    fields: Punctuated<Field, Comma>,
+} impl Atruct {
+    pub fn into_fields(self) -> Punctuated<Field, Comma> {
+        self.fields
+    }
+}
+impl Parse for Atruct {
+    fn parse(input: ParseStream) -> syn::Result<Self> {
+        Ok(Atruct {
+            fields: input.parse_terminated(Field::parse)?
+        })
+    }
+}
+pub struct Field {
+    name: Ident,
+    _colon: Colon,
+    literal: Option<Lit>,
+    nest: Option<Punctuated<Field, Comma>>,
+} impl Parse for Field {
+    fn parse(input: ParseStream) -> syn::Result<Self> {
+        let content;
+        Ok(Field {
+            name: input.parse()?,
+            _colon: input.parse()?,
+            literal: input.parse().ok(),
+            nest: if input.peek(Brace) {
+                    let _ = braced!(content in input);
+                    content.parse_terminated(Field::parse).ok()
+                } else {
+                    None
+                }
+        })
+    }
+}
 
 #[derive(Debug, Clone)]
 pub struct StructMap(
@@ -11,7 +47,7 @@ pub struct StructMap(
 );
 #[derive(Debug, PartialEq, Clone)]
 pub struct Struct(
-    HashMap<Ident/*field name*/, Value>
+    HashMap</*field name*/Ident, Value>
 );
 #[derive(Debug, PartialEq, Clone)]
 pub enum Value {
@@ -26,14 +62,10 @@ impl StructMap {
     pub fn from_fields(fields: Punctuated<Field, Comma>) -> Self {
         let mut map = HashMap::new();
         let init_id = "0".to_owned();
-        
         parse_fields(init_id, fields, &mut map);
-
-        // list.sort_unstable_by_key(|s| s.id);
-        // list.reverse();
         StructMap(map)
     }
-    pub fn from_map(map: HashMap<String, Struct>) -> Self {
+    pub fn _from_map(map: HashMap<String, Struct>) -> Self {
         StructMap(map)
     }
 
@@ -58,7 +90,7 @@ impl Struct {
     pub fn fields(&self) -> Iter<Ident, Value> {
         self.0.iter()
     }
-    pub fn from_map(field_map: HashMap<Ident, Value>) -> Self {
+    pub fn _from_map(field_map: HashMap<Ident, Value>) -> Self {
         Self(field_map)
     }
 }
@@ -148,7 +180,7 @@ mod test {
         ]);
         assert_eq!(
             StructMap::from_fields(case).0,
-            StructMap::from_map(HashMap::from([(
+            StructMap::_from_map(HashMap::from([(
                 "0".to_owned(),
                 Struct(
                     HashMap::from([
@@ -177,7 +209,7 @@ mod test {
         ]);
         assert_eq!(
             StructMap::from_fields(case).0,
-            StructMap::from_map(HashMap::from([
+            StructMap::_from_map(HashMap::from([
                 ("0".to_owned(),
                 Struct(
                     HashMap::from([

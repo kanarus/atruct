@@ -1,9 +1,6 @@
-use std::{iter::Cloned, rc::Rc};
-
-use proc_macro2::{TokenStream, Ident};
+use proc_macro2::TokenStream;
 use quote::{quote, format_ident};
-use syn::token;
-use crate::parser::{StructMap, Value};
+use crate::atruct_value::parser::{StructMap, Value};
 
 
 pub fn build_token_stream(structs: StructMap) -> TokenStream {
@@ -36,13 +33,11 @@ fn build_struct_defs(structs: StructMap) -> TokenStream {
 }
 
 fn build_struct_instance(structs: StructMap) -> TokenStream {
-    // let mut instance = TokenStream::new();
-    build_struct_instance_inner(&structs, &"0".into(), &mut TokenStream::new())// &mut instance)
+    build_struct_instance_inner(&structs, &"0".into(), &mut TokenStream::new())
 }
 fn build_struct_instance_inner(
     structs: &StructMap,
     id: &String,
-    // current_instance: &mut TokenStream
     current_instance: &mut TokenStream
 ) -> TokenStream {
     let wrapping_name = wrapping_name(id);
@@ -79,14 +74,14 @@ mod test {
     use std::collections::HashMap;
     use proc_macro2::{Ident, Span};
     use quote::quote;
-    use crate::parser::{StructMap, Struct, Value};
+    use crate::atruct_value::parser::{StructMap, Struct, Value};
     use super::build_token_stream;
 
     #[test]
     fn build_a_1() {
-        let case = StructMap::from_map(HashMap::from([(
+        let case = StructMap::_from_map(HashMap::from([(
             "0".to_owned(),
-            Struct::from_map(
+            Struct::_from_map(
                 HashMap::from([
                     (Ident::new("a", Span::call_site()),
                     Value::Int(1)),
