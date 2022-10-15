@@ -3,7 +3,7 @@ use atruct::Return;
 fn main() {
     let abc = get_abc();
     println!("{}", abc.a);  // 24
-    println!("{}", abc.b);  // you can use any type in a field
+    println!("{}", abc.b);  // you can use any type for a field
     println!("{:?}", abc.c);  // [-1, 0, 0, -1, 1, 0, 1, -1]
 }
 
