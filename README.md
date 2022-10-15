@@ -1,4 +1,4 @@
-## atruct
+### atruct
 provides following 2 macros:
 
 - `atruct!`
