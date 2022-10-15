@@ -2,7 +2,7 @@ use std::collections::{HashMap, hash_map::Iter};
 use proc_macro2::{Ident, TokenStream};
 use quote::quote;
 use syn::{punctuated::Punctuated, token::{Comma, Colon, Brace}, Lit, parse::{Parse, ParseStream}, braced};
-use crate::atruct_value::builder::wrapping_name;
+use crate::internals::atruct_value::builder::wrapping_name;
 
 
 pub struct Atruct {

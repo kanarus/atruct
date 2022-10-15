@@ -1,5 +1,24 @@
-[workspace]
-members = [
-    "atruct",
-    "atruct_internal",
-]
+[package]
+name = "atruct"
+version = "0.1.1"
+edition = "2021"
+authors = ["kanarus <kanarus786@gmail.com>"]
+description = "macros for anonymous structs in Rust"
+documentation = "https://docs.rs/atruct/"
+homepage = "https://crates.io/crates/atruct"
+repository = "https://github.com/kana-rus/atruct"
+readme = "README.md"
+keywords = ["anonymous struct", "multiple return"]
+categories = ["rust-patterns"]
+license = "MIT"
+
+[badges]
+maintenance = { status = "actively-developed" }
+
+[dependencies]
+proc-macro2 = "1.0"
+quote = "1.0"
+syn = "1.0"
+
+[lib]
+proc-macro = true

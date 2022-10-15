@@ -1,2 +1,2 @@
 target/
-atruct_internal/src/atruct_type/
+./src/internals/atruct_type/
