@@ -31,7 +31,7 @@ fn main() {
     println!("{}", anonymous.nest.string);  // literal
 }
 ```
-( ./atruct_macro/examples/define_struct.rs )
+( examples/define_struct.rs )
 
 <br/>
 
@@ -66,7 +66,7 @@ fn get_abc() {
     }
 }
 ```
-( ./atruct_macro/examples/return_struct.rs )
+( examples/return_struct.rs )
 
 <br/>
 
