@@ -8,7 +8,7 @@ documentation = "https://docs.rs/atruct/"
 homepage = "https://crates.io/crates/atruct"
 repository = "https://github.com/kana-rus/atruct"
 readme = "README.md"
-keywords = ["anonymous-struct", "multiple return"]
+keywords = ["anonymous-struct", "multiple-return"]
 categories = ["rust-patterns"]
 license = "MIT"
 
