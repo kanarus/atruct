@@ -1,6 +1,6 @@
 use proc_macro2::TokenStream;
 use quote::{quote, format_ident};
-use crate::atruct_value::parser::{StructMap, Value};
+use crate::internals::atruct_value::parser::{StructMap, Value};
 
 
 pub fn build_token_stream(structs: StructMap) -> TokenStream {
@@ -74,7 +74,7 @@ mod test {
     use std::collections::HashMap;
     use proc_macro2::{Ident, Span};
     use quote::quote;
-    use crate::atruct_value::parser::{StructMap, Struct, Value};
+    use crate::internals::atruct_value::parser::{StructMap, Struct, Value};
     use super::build_token_stream;
 
     #[test]

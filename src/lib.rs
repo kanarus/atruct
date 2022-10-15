@@ -1,4 +1,7 @@
+#![doc(html_root_url = "https://docs.rs/atruct/0.1.1")]
+
 use proc_macro::TokenStream;
+mod internals;
 
 
 /// inspired by [structx](https://github.com/oooutlk/structx) (that doesn't work now), enables to define **anonymous struct**s like
@@ -31,8 +34,9 @@ use proc_macro::TokenStream;
 /// **NOTICE**: Current atruct supports **only literal**s as values. Additional supports are in progress...
 #[proc_macro]
 pub fn atruct(stream: TokenStream) -> TokenStream {
-    atruct_internal::atruct(stream.into()).into()
+    internals::atruct(stream.into()).into()
 }
+
 
 /// We usually return more than 1 values from a function. In such situations, Rust supports only **tupple** as a way to bundle returned values. But it's sometimes a bit anoying: when we'd like to name freely to each field, not `0`, `1`, `2`, ...
 /// 
@@ -66,7 +70,7 @@ pub fn atruct(stream: TokenStream) -> TokenStream {
 #[proc_macro_attribute]
 #[allow(non_snake_case)]
 pub fn Return(fields: TokenStream, function: TokenStream) -> TokenStream {
-    atruct_internal::Return(fields.into(), function.into()).into()
+    internals::Return(fields.into(), function.into()).into()
 }
 
 

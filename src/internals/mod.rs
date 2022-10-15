@@ -4,7 +4,7 @@ use syn::parse;
 
 
 mod atruct_value;
-pub fn atruct(stream: TokenStream) -> TokenStream {
+pub(super) fn atruct(stream: TokenStream) -> TokenStream {
     use atruct_value::{
         parser::{Atruct, StructMap},
         builder::build_token_stream,
@@ -30,7 +30,7 @@ pub fn atruct(stream: TokenStream) -> TokenStream {
 
 mod atruct_return;
 #[allow(non_snake_case)]
-pub fn Return(fields: TokenStream, function: TokenStream) -> TokenStream {
+pub(super) fn Return(fields: TokenStream, function: TokenStream) -> TokenStream {
     use atruct_return::{
         parser::{Return, Function},
         builder::{build_return_struct, replace_marktoken_with_structname},
