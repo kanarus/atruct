@@ -37,7 +37,7 @@ pub fn Return(fields: TokenStream, function: TokenStream) -> TokenStream {
     };
 
     let ret: Return = parse(fields.into()).expect("failed to parse return fields");
-    let func: Function = parse(function.into()).expect("failed to parse function");
+    let func: Function = parse(function.clone().into()).expect("failed to parse function");
     let struct_def = build_return_struct(&func.name, ret);
     let fn_def = replace_marktoken_with_structname(func);
     quote!(

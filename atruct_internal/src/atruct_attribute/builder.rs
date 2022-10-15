@@ -10,7 +10,7 @@ pub fn build_return_struct(func_name: &Ident, ret: Return) -> TokenStream {
     for field in ret.fields {
         let (field_name, field_type) = (field.name, field.typexp);
         fields.extend(quote!(
-            #field_name: #field_type
+            #field_name: #field_type,
         ))
     }
 
@@ -20,8 +20,8 @@ pub fn build_return_struct(func_name: &Ident, ret: Return) -> TokenStream {
 }
 
 pub fn replace_marktoken_with_structname(func: Function) -> TokenStream {
-    let fn_name = func.name;
-    let struct_name= get_struct_name(&fn_name);
+    let fn_name = &func.name;
+    let struct_name = get_struct_name(&fn_name);
 
     let mut replcaed_body = TokenStream::new();
     let mut body = func.body.into_iter();
@@ -42,26 +42,12 @@ pub fn replace_marktoken_with_structname(func: Function) -> TokenStream {
 
     quote!(
         fn #fn_name(#args_stream) -> #struct_name {
+            type Return = #struct_name;
             #replcaed_body
         }
     )
 }
-/*
-fn skip_past_next_at(input: ParseStream) -> Result<()> {
-    input.step(|cursor| {
-        let mut rest = *cursor;
-        while let Some((tt, next)) = rest.token_tree() {
-            match &tt {
-                TokenTree::Punct(punct) if punct.as_char() == '@' => {
-                    return Ok(((), next));
-                }
-                _ => rest = next,
-            }
-        }
-        Err(cursor.error("no `@` was found after this point"))
-    })
-}
-*/
+
 
 
 fn get_struct_name(func_name: &Ident) -> Ident {
@@ -73,7 +59,7 @@ fn get_struct_name(func_name: &Ident) -> Ident {
     while let Some(c) = func_name.next() {
         if c == '_' {flag = true}
         else {struct_name.push(
-            if flag {c.to_ascii_uppercase()} else {c}
+            if flag {flag = false; c.to_ascii_uppercase()} else {c}
         )}
     }
 
