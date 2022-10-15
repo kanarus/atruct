@@ -15,23 +15,23 @@ pub fn atruct(stream: TokenStream) -> TokenStream {
     build_token_stream(struct_map)
 }
 
-mod atruct_type;
-#[allow(non_snake_case)]
-pub fn Atruct(stream: TokenStream) -> TokenStream {
-    use atruct_type::{
-        parser::{Atruct, StructsData},
-        builder::build_token_stream,
-    };
+// mod atruct_type;
+// #[allow(non_snake_case)]
+// pub fn Atruct(stream: TokenStream) -> TokenStream {
+//     use atruct_type::{
+//         parser::{Atruct, StructsData},
+//         builder::build_token_stream,
+//     };
+// 
+//     let atruct: Atruct = parse(stream.into()).expect("failed to parse input to Atruct");
+//     let struct_map = StructsData::from_name_and_fields(atruct.name(), atruct.into_fields());
+//     build_token_stream(struct_map)
+// }
 
-    let atruct: Atruct = parse(stream.into()).expect("failed to parse input to Atruct");
-    let struct_map = StructsData::from_name_and_fields(atruct.name(), atruct.into_fields());
-    build_token_stream(struct_map)
-}
-
-mod atruct_attribute;
+mod atruct_return;
 #[allow(non_snake_case)]
 pub fn Return(fields: TokenStream, function: TokenStream) -> TokenStream {
-    use atruct_attribute::{
+    use atruct_return::{
         parser::{Return, Function},
         builder::{build_return_struct, replace_marktoken_with_structname},
     };
