@@ -1,7 +1,7 @@
-use proc_macro2::{Ident, Span};
+use proc_macro2::{Ident, Span, Punct};
 use syn::{
     punctuated::Punctuated,
-    token::{Comma, Colon, Brace, At, Paren},
+    token::{Comma, Colon, Brace, At, Paren, Bang, Sub},
     parse::{Parse, ParseStream},
     braced, Expr, Type, parenthesized, Error
 };
@@ -9,12 +9,16 @@ use syn::{
 
 pub struct Atruct {
     fields: Punctuated<Field, Comma>,
-} pub struct Field {
+}
+#[derive(Clone)]
+pub struct Field {
     pub name:            Ident,
     pub type_annotation: Option<TypeAnnotation>,
-    _colon:          Colon,
+    _colon:              Colon,
     pub content:         FieldContent,
-} pub enum TypeAnnotation {
+}
+#[derive(Clone)]
+pub enum TypeAnnotation {
     AtAnnotation {
         _at:           At,
         type_of_value: Type,
@@ -23,12 +27,22 @@ pub struct Atruct {
         _paren:        Paren,
         type_of_valle: Type,
     },
-} pub enum FieldContent {
-    Value(Expr),
+}
+#[derive(Clone)]
+pub enum FieldContent {
+    Value {
+        prefix: Option<Prefix>,
+        expr:   Expr,
+    },
     Nest {
         _brace: Brace,
         fields: Punctuated<Field, Comma>,
     },
+}
+#[derive(Clone)]
+pub enum Prefix {
+    Bang,
+    Minus,
 }
 
 
@@ -45,7 +59,7 @@ impl Atruct {
 } impl Parse for Field {
     fn parse(input: ParseStream) -> syn::Result<Self> {
         Ok(Field {
-            name: input.parse()?,
+            name: input.parse().expect("expected identifier / not supporting block value like `field: {let v = Vec::new(); v}`"),
             type_annotation:
                 if input.peek(At)
                 || input.peek(Paren) {
@@ -81,75 +95,17 @@ impl Atruct {
                 fields: fields_buf.parse_terminated(Field::parse)?,
             })
         } else {
-            Ok(Self::Value(
-                input.parse()?
-            ))
+            Ok(Self::Value {
+                prefix:
+                    if input.peek(Bang) {
+                        input.parse::<Punct>().unwrap();
+                        Some(Prefix::Bang)
+                    } else if input.peek(Sub) {
+                        input.parse::<Punct>().unwrap();
+                        Some(Prefix::Minus)
+                    } else {None},
+                expr: input.parse()?
+            })
         }
     }
 }
-
-
-
-/*
-#[cfg(test)]
-mod test {
-    use proc_macro2::Span;
-    use syn::{token::Colon, LitInt, LitStr};
-    use super::*;
-
-    #[test]
-    fn parse_a_1() {
-        let case = Punctuated::<Field, Comma>::from_iter([
-            Field {
-                name: Ident::new("a", Span::call_site()),
-                _colon: Colon { spans: [Span::call_site()] },
-                literal: Some(Lit::Int(LitInt::new("1", Span::call_site()))),
-                nest: None,
-            }
-        ]);
-        assert_eq!(
-            StructMap::from_fields(case).0,
-            StructMap::_from_map(HashMap::from([(
-                "0".to_owned(),
-                Struct(
-                    HashMap::from([
-                        (Ident::new("a", Span::call_site()),
-                        Value::Int(1)),
-                    ])
-                )
-            )])).0
-        )
-    }
-    #[test]
-    fn parse_a_1_b_string() {
-        let case = Punctuated::<Field, Comma>::from_iter([
-            Field {
-                name: Ident::new("a", Span::call_site()),
-                _colon: Colon { spans: [Span::call_site()] },
-                literal: Some(Lit::Int(LitInt::new("1", Span::call_site()))),
-                nest: None
-            },
-            Field {
-                name: Ident::new("b", Span::call_site()),
-                _colon: Colon { spans: [Span::call_site()] },
-                literal: Some(Lit::Str(LitStr::new("string", Span::call_site()))),
-                nest: None
-            }
-        ]);
-        assert_eq!(
-            StructMap::from_fields(case).0,
-            StructMap::_from_map(HashMap::from([
-                ("0".to_owned(),
-                Struct(
-                    HashMap::from([
-                        (Ident::new("a", Span::call_site()),
-                        Value::Int(1)),
-                        (Ident::new("b", Span::call_site()),
-                        Value::Str("string".to_owned())),
-                    ])
-                )),
-            ])).0
-        )
-    }
-}
-*/

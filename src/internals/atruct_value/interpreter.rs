@@ -1,44 +1,44 @@
 use std::collections::{HashMap, hash_map::Iter};
 use proc_macro2::{Ident, TokenStream};
 use quote::{quote, format_ident};
-use syn::{punctuated::Punctuated, token::Comma, Expr, Lit, Type, ExprLit};
-use super::{
-    parser::*, utils::type_of_num,
-};
+use syn::{punctuated::Punctuated, token::Comma, Expr, Lit, ExprLit};
+use super::parser::*;
 
 
+#[derive(Clone)]
 pub struct StructMap(
-    HashMap</*struct id*/Ident, Struct>
-); pub struct Struct(
+    HashMap</*struct id*/String, Struct>
+);
+#[derive(Clone)]
+pub struct Struct(
     HashMap</*field name*/Ident, Item>,
-); pub enum Item {
+);
+#[derive(Clone)]
+pub enum Item {
+    Struct(/*struct id*/String),
     Value {
         value:         TokenStream,
         type_of_value: TokenStream,
     },
-    Struct {
-        id:     Ident,
-        fields: Punctuated<Field, Comma>,
-    }
 }
 
 
 impl StructMap {
     pub fn from_fields(fields: Punctuated<Field, Comma>) -> Self {
         let mut map = HashMap::new();
-        let init_id = format_ident!("0");
+        let init_id = "0".into();
         parse_fields(init_id, fields, &mut map);
         StructMap(map)
     }
-    pub fn _from_map(map: HashMap<Ident, Struct>) -> Self {
+    pub fn _from_map(map: HashMap<String, Struct>) -> Self {
         StructMap(map)
     }
 
-    pub fn get(&self, id: &Ident) -> &Struct {
+    pub fn get(&self, id: &String) -> &Struct {
         self.0.get(id).expect("not found Struct")
     }
 } impl Iterator for StructMap {
-    type Item = (Ident, Struct);
+    type Item = (/*struct id*/String, Struct);
     fn next(&mut self) -> Option<Self::Item> {
         if self.0.is_empty() {
             None
@@ -60,11 +60,11 @@ impl Struct {
 }
 
 impl FieldContent {
-    pub fn get_literal_type(literal: ExprLit) -> TokenStream {
-        match literal.lit {
-            Lit::Bool(boolean) => quote!(bool),
-            Lit::Char(c) => quote!(char),
-            Lit::Str(str) => quote!(&'static str),
+    pub fn get_literal_type(literal: &ExprLit) -> TokenStream {
+        match &literal.lit {
+            Lit::Bool(_) => quote!(bool),
+            Lit::Char(_) => quote!(char),
+            Lit::Str(_) => quote!(&'static str),
             Lit::Float(float) => {
                 let float_string = float.to_string();
                 if float_string.contains("f32") {
@@ -119,12 +119,26 @@ impl TypeAnnotation {
         }
     }
 }
+impl Item {
+    pub fn type_name(&self) -> TokenStream {
+        match self {
+            Item::Struct(id) => {
+                let type_name = format_ident!("S_{id}");
+                quote!(#type_name)
+            },
+            Item::Value {
+                #[allow(unused)] value,
+                type_of_value
+            } => type_of_value.clone()
+        }
+    }
+}
 
 
 fn parse_fields(
-    id: Ident,
+    id: String,
     fields: Punctuated<Field, Comma>,
-    struct_map: &mut HashMap<Ident, Struct>,
+    struct_map: &mut HashMap<String, Struct>,
 ) {
     let mut field_map = HashMap::new();
     let mut struct_fileds_count: usize = 0;
@@ -132,16 +146,27 @@ fn parse_fields(
     for field in fields {
         let field_name = field.name;
         match field.content {
-            FieldContent::Value(value) => {
-                let type_of_value = match value {
+            FieldContent::Value {
+                prefix,
+                expr
+            } => {
+                let type_of_value = match &expr {
                     Expr::Lit(lit) => FieldContent::get_literal_type(lit),
-                    _ => field.type_annotation.expect("type annotation is needed for non literal values").get_type(),
+                    _ => field.type_annotation.expect("type annotations are needed for non literal values").get_type(),
                 };
+                let value =
+                    if let Some(Prefix::Bang) = prefix {
+                        quote!(!#expr)
+                    } else if let Some(Prefix::Minus) = prefix {
+                        quote!(-#expr)
+                    } else {
+                        quote!(#expr)
+                    };
 
                 let err = field_map.insert(
-                    field_name, Item::Value {
-                        value: quote!(#value),
-                        type_of_value
+                    field_name.clone(), Item::Value {
+                        value,
+                        type_of_value,
                     }
                 ); assert!(err.is_none(),
                     "field {} already exists in the same class", field_name
@@ -152,13 +177,10 @@ fn parse_fields(
                 fields
             } => {
                 struct_fileds_count += 1;
-                let next_struct_id = format_ident!("{id}_{struct_fileds_count}");
+                let next_struct_id = format!("{id}_{struct_fileds_count}");
 
                 let err = field_map.insert(
-                    field_name, Item::Struct {
-                        id: next_struct_id,
-                        fields
-                    }
+                    field_name.clone(), Item::Struct(next_struct_id.clone())
                 ); assert!(err.is_none(),
                     "field {} already exists in the same class", field_name
                 );
