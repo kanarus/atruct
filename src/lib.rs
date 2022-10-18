@@ -1,37 +1,43 @@
-#![doc(html_root_url = "https://docs.rs/atruct/0.1.3")]
+#![doc(html_root_url = "https://docs.rs/atruct/0.2.0")]
 
 use proc_macro::TokenStream;
 mod internals;
 
 
-/// inspired by [structx](https://github.com/oooutlk/structx) (that doesn't work now), enables to define **anonymous struct**s like
+/// inspired by [structx](https://github.com/oooutlk/structx) (that doesn't work now), `atruct!` macro enables to define **anonymous struct**s like
 /// 
-/// ```edition2021
+/// ```rs
 /// use atruct::atruct;
+/// use std::collections::HashMap;
 /// 
 /// fn main() {
 ///     let anonymous = atruct!(
-///         integer1: 0,
-///         integer2: -5,
-///         float: 3.14,
+///         // Type annotaion is needed for each non-literal value.
+///         // There are 2 options to annotate type:
+///         string1 @ String: String::from("string1"),  // @ pattern and
+///         string2(String): String::from("string2"),  // () pattern.
+///         // Their behaviors are completely the same. Use any one you like!
+///         box_option_vec(Box<Option<Vec<u8>>>): Box::new(Some(Vec::new())),
+///         hash @ HashMap<u8, u8>: HashMap::from([]),
+///         vec(Vec<u8>): vec![0, 1, 0, 1, 1],
 ///         nest: {
-///             string: "literal",
-///             boolean: true,
-///         }
+///             a: "literals don't need type annotation",
+///             b: 100usize,  // unlike v0.1, type suffix is supported for integers!
+///         },
 ///     );
 /// 
-///     println!("{}", anonymous.integer1);  // 0
-///     println!("{}", anonymous.float);  // 3.14
-///     println!("{}", anonymous.nest.string);  // literal
+///     println!("{}", anonymous.string1);  // string1
+///     println!("{}", anonymous.string2);  // string2
+///     println!("{:?}", anonymous.box_option_vec);  // Some([])
+///     println!("{:?}", anonymous.hash);  // {}
+///     println!("{:?}", anonymous.vec);  // [0, 1, 0, 1, 1]
 /// }
 /// ```
-/// ( examples/define_struct.rs )
+/// ( examples/define_struct_of_various_values.rs )
 /// 
 /// <br/>
 /// 
-/// As you see, atruct supports nested structs.
-/// 
-/// **NOTICE**: Current atruct supports **only literal**s as values. Additional supports are in progress...
+/// atruct supports nested structs.
 #[proc_macro]
 pub fn atruct(stream: TokenStream) -> TokenStream {
     internals::atruct(stream.into()).into()
@@ -65,19 +71,10 @@ pub fn atruct(stream: TokenStream) -> TokenStream {
 /// 
 /// <br/>
 /// 
-/// - Unlike `atruct!`, `#[Return]` doesn't support nested structs (for a technical reason). So returned value is just like **a tupple you can give any names to its fields**.
-/// - `#[Return]` automatically generates a struct named as "FunctionName" ( if function is `get_abc`, for example, `GetAbc` ), But at the same time defines a type synonym `Return`. So you **DON't have to** memorize or write the generated struct's name.
+/// - Unlike `atruct!`, `#[Return]` doesn't support nested structs. So you can use returned value just like **a tupple you can give any names to its fields**.
+/// - `#[Return]` automatically generates a struct named as "FunctionName" ( e.g. if function is `get_abc`, for example, `GetAbc` ), But at the same time defines a type synonym `Return`. So you **DON't need to** memorize or write the generated struct's name.
 #[proc_macro_attribute]
 #[allow(non_snake_case)]
 pub fn Return(fields: TokenStream, function: TokenStream) -> TokenStream {
     internals::Return(fields.into(), function.into()).into()
 }
-
-
-/*
-    #[proc_macro]
-    #[allow(non_snake_case)]
-    pub fn Atruct(stream: TokenStream) -> TokenStream {
-        atruct_internal::Atruct(stream.into()).into()
-    }
-*/
