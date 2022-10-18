@@ -19,9 +19,11 @@ fn main() {
     let anonymous = atruct!(
         // Type annotaion is needed for each non-literal value.
         // There are 2 options to annotate type:
+
         string1 @ String: String::from("string1"),  // @ pattern and
         string2(String): String::from("string2"),  // () pattern.
         // Their behaviors are completely the same. Use any one you like!
+
         box_option_vec(Box<Option<Vec<u8>>>): Box::new(Some(Vec::new())),
         hash @ HashMap<u8, u8>: HashMap::from([]),
         vec(Vec<u8>): vec![0, 1, 0, 1, 1],
@@ -38,13 +40,13 @@ fn main() {
     println!("{:?}", anonymous.vec);  // [0, 1, 0, 1, 1]
 }
 ```
-( examples/define_struct_of_various_values.rs )
+( examples/struct_of_various_values.rs )
 
 <br/>
 
-atruct supports nested structs.
+atruct supports **nested structs**.
 
-**NOTICE**: When atruct was v0.1 only literals are supported as values, BUT in v0.2 you can use (maybe) all values!
+**NOTICE**: When atruct was v0.1 only literals are supported as values, BUT in v0.2 you can use (maybe) **all value**s!
 
 <br/>
 <br/>

@@ -1,4 +1,4 @@
-#![doc(html_root_url = "https://docs.rs/atruct/0.2.0")]
+#![doc(html_root_url = "https://docs.rs/atruct/0.2.1")]
 
 use proc_macro::TokenStream;
 mod internals;
@@ -14,9 +14,11 @@ mod internals;
 ///     let anonymous = atruct!(
 ///         // Type annotaion is needed for each non-literal value.
 ///         // There are 2 options to annotate type:
+/// 
 ///         string1 @ String: String::from("string1"),  // @ pattern and
 ///         string2(String): String::from("string2"),  // () pattern.
 ///         // Their behaviors are completely the same. Use any one you like!
+/// 
 ///         box_option_vec(Box<Option<Vec<u8>>>): Box::new(Some(Vec::new())),
 ///         hash @ HashMap<u8, u8>: HashMap::from([]),
 ///         vec(Vec<u8>): vec![0, 1, 0, 1, 1],
@@ -33,11 +35,11 @@ mod internals;
 ///     println!("{:?}", anonymous.vec);  // [0, 1, 0, 1, 1]
 /// }
 /// ```
-/// ( examples/define_struct_of_various_values.rs )
+/// ( examples/struct_of_various_values.rs )
 /// 
 /// <br/>
 /// 
-/// atruct supports nested structs.
+/// atruct supports **nested structs**.
 #[proc_macro]
 pub fn atruct(stream: TokenStream) -> TokenStream {
     internals::atruct(stream.into()).into()
