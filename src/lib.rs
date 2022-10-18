@@ -1,4 +1,4 @@
-#![doc(html_root_url = "https://docs.rs/atruct/0.1.1")]
+#![doc(html_root_url = "https://docs.rs/atruct/0.1.3")]
 
 use proc_macro::TokenStream;
 mod internals;

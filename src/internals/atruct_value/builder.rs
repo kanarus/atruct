@@ -1,9 +1,11 @@
+use std::str::FromStr;
+
 use proc_macro2::TokenStream;
 use quote::{quote, format_ident};
-use crate::internals::atruct_value::parser::{StructMap, Value};
+use super::interpreter::{StructMap};
 
 
-pub fn build_token_stream(structs: StructMap) -> TokenStream {
+pub fn build_token_stream<T>(structs: StructMap<T>) -> TokenStream {
     let defs = build_struct_defs(structs.clone());
     let instance = build_struct_instance(structs);
 
@@ -13,7 +15,7 @@ pub fn build_token_stream(structs: StructMap) -> TokenStream {
     })
 }
 
-fn build_struct_defs(structs: StructMap) -> TokenStream {
+fn build_struct_defs<T>(structs: StructMap<T>) -> TokenStream {
     let mut defs = TokenStream::new();
 
     for (id, s) in structs {
@@ -21,7 +23,7 @@ fn build_struct_defs(structs: StructMap) -> TokenStream {
 
         let mut field_defs = TokenStream::new();
         for (ident, value) in s.fields() {
-            let type_name = value.get_type();
+            let type_name = TokenStream::from_str(type_of(value).as_str()).expect("");
             field_defs.extend(quote!(#ident: #type_name, ));
         }
         defs.extend(quote!(
@@ -32,11 +34,11 @@ fn build_struct_defs(structs: StructMap) -> TokenStream {
     defs
 }
 
-fn build_struct_instance(structs: StructMap) -> TokenStream {
+fn build_struct_instance<T>(structs: StructMap<T>) -> TokenStream {
     build_struct_instance_inner(&structs, &"0".into(), &mut TokenStream::new())
 }
-fn build_struct_instance_inner(
-    structs: &StructMap,
+fn build_struct_instance_inner<T>(
+    structs: &StructMap<T>,
     id: &String,
     current_instance: &mut TokenStream
 ) -> TokenStream {
@@ -53,9 +55,8 @@ fn build_struct_instance_inner(
                 );
                 fields.extend(quote!(#next_struct,))
             }
-            other => {
-                let literal_token = other.unwrap_literal_as_token();
-                fields.extend(quote!(#literal_token,))
+            Value::Value(value) => {
+                fields.extend(quote!(#value, ))
             }
         }
     }
@@ -68,7 +69,15 @@ pub fn wrapping_name(id: &String) -> TokenStream {
     quote!(#name)
 }
 
+fn type_of<T>(_: &T) -> String {
+    let mut raw_name = String::from(std::any::type_name::<T>());
+    if raw_name.starts_with("alloc") {
+        raw_name.replace_range(0..=4, "std")
+    }
+    raw_name
+}
 
+/*
 #[cfg(test)]
 mod test {
     use std::collections::HashMap;
@@ -97,3 +106,4 @@ mod test {
         )
     }
 }
+*/

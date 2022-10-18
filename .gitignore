@@ -1,2 +1,4 @@
 target/
+memo.md
+examples/test.rs
 src/internals/atruct_type
