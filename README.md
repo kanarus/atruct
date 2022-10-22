@@ -1,15 +1,15 @@
-atruct provides following 2 macros about anonymous struct:
+Current atruct provides following 2 macros related to anonymous struct:
 
 - `atruct!`
 - `#[Return]`
 
-they are independent of each other.
+They are independent of each other.
 
 <br/>
 <br/>
 
 # atruct!
-inspired by [structx](https://github.com/oooutlk/structx) (that doesn't work now), `atruct!` macro enables to define **anonymous struct**s like
+inspired by [structx](https://github.com/oooutlk/structx) (that doesn't work now), `atruct!` macro enables to use variables of **anonymous struct**s like
 
 ```rs
 use atruct::atruct;
@@ -43,9 +43,9 @@ fn main() {
 
 <br/>
 
-atruct supports **nested structs**.
+- `atruct!` supports **nested structs**.
 
-**NOTICE**: When atruct was v0.1 only literals are supported as values, BUT in v0.2 you can use (maybe) **all value**s!
+- When atruct was v0.1 only literals are supported as values, BUT in v0.2 you can use (maybe) **any type** of values!
 
 <br/>
 <br/>
@@ -78,5 +78,36 @@ fn get_abc() {
 
 <br/>
 
-- Unlike `atruct!`, `#[Return]` doesn't support nested structs. So you can use returned value just like **a tupple you can give any names to its fields**.
+- Unlike `atruct!`, `#[Return]` doesn't support nested structs. So returned value is just like **a tupple you can give any names to its fields**.
 - `#[Return]` automatically generates a struct named as "FunctionName" ( e.g. if function is `get_abc`, for example, `GetAbc` ), but at the same time defines a type synonym `Return`. So you **DON't need to** memorize the generated struct's name.
+
+<br/>
+<br/>
+
+**NOTICE**: I'm plannig to implement `#[Atruct]` attribute in next version (v0.3). This will enable to define nested struct easily like
+
+```rs
+#[Atruct]
+struct DeepNestedStruct {
+    a: Vec<u8>,
+    b: struct B: {
+        c: String,
+        d: struct D {
+            e: u8,
+            f: u8,
+        },
+    },
+    b2: B,
+    e: struct E {
+        f: &'static str,
+        g: enum G {
+            X,
+            Y,
+            Other {
+                name: String,
+                id: usize
+            },
+        },
+    },
+}
+```

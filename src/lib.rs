@@ -1,10 +1,10 @@
-#![doc(html_root_url = "https://docs.rs/atruct/0.2.2")]
+#![doc(html_root_url = "https://docs.rs/atruct/0.2.3")]
 
 use proc_macro::TokenStream;
 mod internals;
 
 
-/// inspired by [structx](https://github.com/oooutlk/structx) (that doesn't work now), `atruct!` macro enables to define **anonymous struct**s like
+/// inspired by [structx](https://github.com/oooutlk/structx) (that doesn't work now), `atruct!` macro enables to use variables of **anonymous struct**s like
 /// 
 /// ```rs
 /// use atruct::atruct;
@@ -38,7 +38,7 @@ mod internals;
 /// 
 /// <br/>
 /// 
-/// atruct supports **nested structs**.
+/// `atruct!` supports **nested structs**.
 #[proc_macro]
 pub fn atruct(stream: TokenStream) -> TokenStream {
     internals::atruct(stream.into()).into()
@@ -72,7 +72,7 @@ pub fn atruct(stream: TokenStream) -> TokenStream {
 /// 
 /// <br/>
 /// 
-/// - Unlike `atruct!`, `#[Return]` doesn't support nested structs. So you can use returned value just like **a tupple you can give any names to its fields**.
+/// - Unlike `atruct!`, `#[Return]` doesn't support nested structs. So returned value is just like **a tupple you can give any names to its fields**.
 /// - `#[Return]` automatically generates a struct named as "FunctionName" ( e.g. if function is `get_abc`, for example, `GetAbc` ), But at the same time defines a type synonym `Return`. So you **DON't need to** memorize the generated struct's name.
 #[proc_macro_attribute]
 #[allow(non_snake_case)]
