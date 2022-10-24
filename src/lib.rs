@@ -1,4 +1,4 @@
-#![doc(html_root_url = "https://docs.rs/atruct/0.2.3")]
+#![doc(html_root_url = "https://docs.rs/atruct/0.2.4")]
 
 use proc_macro::TokenStream;
 mod internals;
@@ -6,7 +6,7 @@ mod internals;
 
 /// inspired by [structx](https://github.com/oooutlk/structx) (that doesn't work now), `atruct!` macro enables to use variables of **anonymous struct**s like
 /// 
-/// ```rs
+/// ```edition2021
 /// use atruct::atruct;
 /// 
 /// fn main() {

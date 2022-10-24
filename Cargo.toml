@@ -1,6 +1,6 @@
 [package]
 name = "atruct"
-version = "0.2.3"
+version = "0.2.4"
 edition = "2021"
 authors = ["kanarus <kanarus786@gmail.com>"]
 description = "macros for anonymous structs in Rust"

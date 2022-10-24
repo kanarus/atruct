@@ -78,19 +78,20 @@ fn get_abc() {
 
 <br/>
 
-- Unlike `atruct!`, `#[Return]` doesn't support nested structs. So returned value is just like **a tupple you can give any names to its fields**.
+- `#[Return]` doesn't support nested structs. So returned value is just like **a tupple you can give any names to its fields**.
 - `#[Return]` automatically generates a struct named as "FunctionName" ( e.g. if function is `get_abc`, for example, `GetAbc` ), but at the same time defines a type synonym `Return`. So you **DON't need to** memorize the generated struct's name.
 
 <br/>
 <br/>
 
-**NOTICE**: I'm plannig to implement `#[Atruct]` attribute in next version (v0.3). This will enable to define nested struct easily like
+### **NOTICE** on planned attribute `#[Atruct]`
+It was decided to be implmented as `define!` macro in my another crate "[kozo](https://crates.io/crates/)".\
+`define!` enables to define nested struct easily:
 
 ```rs
-#[Atruct]
-struct DeepNestedStruct {
+define!(struct DeepNestedStruct {
     a: Vec<u8>,
-    b: struct B: {
+    b: struct B {
         c: String,
         d: struct D {
             e: u8,
@@ -109,5 +110,5 @@ struct DeepNestedStruct {
             },
         },
     },
-}
+});
 ```
