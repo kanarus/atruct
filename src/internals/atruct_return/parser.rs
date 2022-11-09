@@ -1,12 +1,17 @@
-use syn::{parse::Parse, token, Attribute, parenthesized, FnArg, braced};
-use super::{ReturnFields, ReturnField, TargetFn};
+use syn::{parse::Parse, Attribute, parenthesized, FnArg, braced};
+use super::{ReturnFields, ReturnField, TargetFn, WithReturn};
+
+
+impl Parse for WithReturn {
+    fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
+        Ok(Self(input.parse()?))
+    }
+}
 
 
 impl Parse for ReturnFields {
     fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
-        Ok(Self(
-            input.parse_terminated(ReturnField::parse)?
-        ))
+        Ok(Self(input.parse_terminated(ReturnField::parse)?))
     }
 }
 impl Parse for ReturnField {
@@ -24,12 +29,12 @@ impl Parse for TargetFn {
         let (args_buf, body_buf);
         Ok(Self {
             attrs:    input.call(Attribute::parse_inner)?,
-            vis:      if input.peek(token::Pub) {Some(input.parse()?)} else {None},
+            vis:      input.parse()?,
             _async:   input.parse()?,
             _unsafe:  input.parse()?,
             _fn:      input.parse()?,
             name:     input.parse()?,
-            generics: if input.peek(token::Lt) {Some(input.parse()?)} else {None},
+            generics: input.parse()?,
             _paren:   parenthesized!(args_buf in input),
             args:     args_buf.parse_terminated(FnArg::parse)?,
             _brace:   braced!(body_buf in input),

@@ -1,7 +1,78 @@
 use proc_macro2::{Ident, TokenStream};
 use quote::{quote, format_ident, ToTokens};
+use syn::{ImplItem, parse2, Error, ItemFn, Attribute};
 use crate::internals::Interpret;
-use super::Return;
+use super::{Return, WithReturn};
+
+
+pub(crate) struct WithReturnStreams {
+    pub impl_block_stream: TokenStream,
+    pub structs_stream:    TokenStream,
+}
+
+impl Interpret<Result<WithReturnStreams, Error>> for WithReturn {
+    fn interpret(self) -> Result<WithReturnStreams, Error> {
+        let impl_block = self.0;
+        let mut impl_block_stream = TokenStream::new();
+        let mut structs_stream = TokenStream::new();
+        
+        for attr in impl_block.attrs {
+            attr.to_tokens(&mut impl_block_stream)
+        }
+        if let Some(_unsafe) = impl_block.unsafety {
+            _unsafe.to_tokens(&mut impl_block_stream)
+        }
+        impl_block.impl_token.to_tokens(&mut impl_block_stream);
+        impl_block.generics.to_tokens(&mut impl_block_stream);
+        if let Some((bang, path, _for)) = impl_block.trait_ {
+            if let Some(_bang) = bang {
+                _bang.to_tokens(&mut impl_block_stream)
+            }
+            path.to_tokens(&mut impl_block_stream);
+            _for.to_tokens(&mut impl_block_stream);
+        }
+        impl_block.self_ty.to_tokens(&mut impl_block_stream);
+        
+
+        let mut impl_items = TokenStream::new();
+        let return_attr_ident = format_ident!("Return");
+
+        for item in impl_block.items {
+            match item {
+                ImplItem::Method(mut function) => {
+                    if let Some(return_attr) = extract_attr_of_ident(
+                        &return_attr_ident, &mut function.attrs
+                    ) {
+                        let ReturnStreams {
+                            struct_stream,
+                            function_stream
+                        } = Return {
+                            fields: return_attr.parse_args()?,
+                            target: parse2(ItemFn {
+                                attrs: function.attrs,
+                                vis:   function.vis,
+                                sig:   function.sig,
+                                block: Box::new(function.block),
+                            }.into_token_stream())?,
+                        }.interpret();
+                        
+                        struct_stream.to_tokens(&mut structs_stream);
+                        function_stream.to_tokens(&mut impl_items);
+                    } else {
+                        function.to_tokens(&mut impl_items)
+                    }
+                }
+                other => other.to_tokens(&mut impl_items)
+            }
+        }
+
+        impl_block_stream.extend(quote!(
+            { #impl_items }
+        ));
+
+        Ok(WithReturnStreams { impl_block_stream, structs_stream })
+    }
+}
 
 
 pub(crate) struct ReturnStreams {
@@ -39,9 +110,7 @@ impl Interpret<ReturnStreams> for Return {
             for attr in taget.attrs {
                 attr.to_tokens(&mut signature)
             }
-            if let Some(vis) = taget.vis {
-                vis.to_tokens(&mut signature)
-            }
+            taget.vis.to_tokens(&mut signature);
             if let Some(_async) = taget._async {
                 _async.to_tokens(&mut signature)
             }
@@ -50,9 +119,7 @@ impl Interpret<ReturnStreams> for Return {
             }
             taget._fn.to_tokens(&mut signature);
             taget.name.to_tokens(&mut signature);
-            if let Some(generics) = taget.generics {
-                generics.to_tokens(&mut signature)
-            }
+            taget.generics.to_tokens(&mut signature);
 
             quote!(
                 #signature(#args) -> #struct_name {
@@ -66,6 +133,7 @@ impl Interpret<ReturnStreams> for Return {
     }
 }
 
+
 fn camel_cased(function_name: &Ident) -> Ident {
     let mut struct_name = String::new();
     let mut is_head_of_word = true;
@@ -77,4 +145,13 @@ fn camel_cased(function_name: &Ident) -> Ident {
         }
     }
     format_ident!("{struct_name}")
+}
+
+fn extract_attr_of_ident(target: &Ident, vec: &mut Vec<Attribute>) -> Option<Attribute> {
+    for i in 0..vec.len() {
+        if vec[i].path.get_ident() == Some(target) {
+            return Some(vec.remove(i))
+        }
+    }
+    None
 }

@@ -23,16 +23,19 @@ pub(super) fn atruct(stream: TokenStream) -> TokenStream {
     build_token_stream(struct_map)
 }
 
-
 mod atruct_return;
 #[allow(non_snake_case)]
 pub(super) fn Return(fields: TokenStream, function: TokenStream) -> Result<TokenStream, Error> {
     use atruct_return::{Return, ReturnFields, TargetFn};
-
+    Ok(Return {
+        fields: parse2::<ReturnFields>(fields)?,
+        target: parse2::<TargetFn>(function)?,
+    }.interpret().build())
+}
+#[allow(non_snake_case)]
+pub(super) fn withReturn(impl_block: TokenStream) -> Result<TokenStream, Error> {
+    use atruct_return::WithReturn;
     Ok(
-        Return {
-            fields: parse2::<ReturnFields>(fields)?,
-            target: parse2::<TargetFn>(function)?,
-        }.interpret().build()
+        parse2::<WithReturn>(impl_block)?.interpret()?.build()
     )
 }

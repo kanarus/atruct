@@ -1,9 +1,10 @@
-use proc_macro2::{TokenStream, Ident};
-use syn::{punctuated::Punctuated, token, Type, Attribute, Visibility, Generics, FnArg, ItemImpl};
-
 mod parser;
 mod interpreter;
 mod builder;
+
+
+use proc_macro2::{TokenStream, Ident};
+use syn::{punctuated::Punctuated, token, Type, Attribute, Visibility, Generics, FnArg, ItemImpl};
 
 
 pub(super) struct WithReturn(
@@ -26,12 +27,12 @@ pub(super) struct ReturnField { // field def with NO visivility or else
 }
 pub(super) struct TargetFn { // function def with NO return type
     attrs:    Vec<Attribute>,
-    vis:      Option<Visibility>,
+    vis:      Visibility,
     _async:   Option<token::Async>,
     _unsafe:  Option<token::Unsafe>,
     _fn:      token::Fn,
     name:     Ident,
-    generics: Option<Generics>,
+    generics: Generics,
     _paren:   token::Paren,
     args:     Punctuated<FnArg, token::Comma>,
     _brace:   token::Brace,

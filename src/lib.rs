@@ -81,3 +81,11 @@ pub fn Return(fields: TokenStream, function: TokenStream) -> TokenStream {
         .unwrap_or_else(|e| e.into_compile_error())
         .into()
 }
+
+#[proc_macro_attribute]
+#[allow(non_snake_case)]
+pub fn withReturn(_: TokenStream, impl_block: TokenStream) -> TokenStream {
+    internals::withReturn(impl_block.into())
+        .unwrap_or_else(|e| e.into_compile_error())
+        .into()
+}
