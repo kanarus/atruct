@@ -1,9 +1,8 @@
-Current atruct provides following 2 macros related to anonymous struct:
+Current atruct provides following 3 macros related to anonymous struct:
 
 - `atruct!`
 - `#[Return]`
-
-They are independent of each other.
+- `#[withReturn]`
 
 <br/>
 <br/>
@@ -84,31 +83,34 @@ fn get_abc() {
 <br/>
 <br/>
 
-### **NOTICE** on planned attribute `#[Atruct]`
-It was decided to be implmented as `define!` macro in my another crate "[kozo](https://crates.io/crates/)".\
-`define!` enables to define nested struct easily:
+# #[withReturn]
+Actually, `#[Return]` itself is NOT available in `impl` block for a technical reason. `#[withReturn]` enables this：
 
 ```rs
-define!(struct DeepNestedStruct {
-    a: Vec<u8>,
-    b: struct B {
-        c: String,
-        d: struct D {
-            e: u8,
-            f: u8,
-        },
-    },
-    b2: B,
-    e: struct E {
-        f: &'static str,
-        g: enum G {
-            X,
-            Y,
-            Other {
-                name: String,
-                id: usize
-            },
-        },
-    },
-});
+use atruct::withReturn;
+
+fn main() {
+    let abc = T::get_abc();
+    println!("abc: {{a: {}, b: {}, c: {:?}}}", abc.a, abc.b, abc.c);
+    // abc: {a: 0, b: string, c: [1, 0, -1, 0]}
+}
+
+struct T;
+#[withReturn]
+impl T {
+    #[Return(a: u8, b: String, c: Vec<isize>)]
+    fn get_abc() {
+        Return {
+            a: 0,
+            b: "string".into(),
+            c: vec![1, 0, -1, 0],
+        }
+    }
+}
 ```
+( examples/return_in_impl_block.rs )
+
+<br/>
+
+- As you see, you don't need to `use atruct::Return` just to write `#[Return]` in `impl` blocks.
+- Current `#[withReturn]` generates structs in completely the same way as normal `#[Return]`, meaning **all functions** that use `#[Return]` have to unique names to each others (This problem will be fixed in a few days).

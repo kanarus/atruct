@@ -1,4 +1,4 @@
-#![doc(html_root_url = "https://docs.rs/atruct/0.2.4")]
+#![doc(html_root_url = "https://docs.rs/atruct/0.3.0")]
 
 use proc_macro::TokenStream;
 mod internals;
@@ -82,6 +82,36 @@ pub fn Return(fields: TokenStream, function: TokenStream) -> TokenStream {
         .into()
 }
 
+/// Actually, `#[Return]` itself is NOT available in `impl` block for a technical reason. `#[withReturn]` enables this：
+/// 
+/// ```edition2021
+/// use atruct::withReturn;
+/// 
+/// fn main() {
+///     let abc = T::get_abc();
+///     println!("abc: {{a: {}, b: {}, c: {:?}}}", abc.a, abc.b, abc.c);
+///     // abc: {a: 0, b: string, c: [1, 0, -1, 0]}
+/// }
+/// 
+/// struct T;
+/// #[withReturn]
+/// impl T {
+///     #[Return(a: u8, b: String, c: Vec<isize>)]
+///     fn get_abc() {
+///         Return {
+///             a: 0,
+///             b: "string".into(),
+///             c: vec![1, 0, -1, 0],
+///         }
+///     }
+/// }
+/// ```
+/// ( examples/return_in_impl_block.rs )
+/// 
+/// <br/>
+/// 
+/// - As you see, you don't need to `use atruct::Return` just to write `#[Return]` in `impl` blocks.
+/// - Current `#[withReturn]` generates structs in completely the same way as normal `#[Return]`, meaning **all functions** that use `#[Return]` have to unique names to each others (This problem will be fixed in a few days).
 #[proc_macro_attribute]
 #[allow(non_snake_case)]
 pub fn withReturn(_: TokenStream, impl_block: TokenStream) -> TokenStream {
