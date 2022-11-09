@@ -1,6 +1,13 @@
 use proc_macro2::TokenStream;
-use quote::quote;
-use syn::parse;
+use syn::{parse, parse2, Error};
+
+
+trait Interpret<T> {
+    fn interpret(self) -> T;
+}
+trait Build {
+    fn build(self) -> TokenStream;
+}
 
 
 mod atruct_value;
@@ -19,18 +26,13 @@ pub(super) fn atruct(stream: TokenStream) -> TokenStream {
 
 mod atruct_return;
 #[allow(non_snake_case)]
-pub(super) fn Return(fields: TokenStream, function: TokenStream) -> TokenStream {
-    use atruct_return::{
-        parser::{Return, Function},
-        builder::{build_return_struct, replace_marktoken_with_structname},
-    };
+pub(super) fn Return(fields: TokenStream, function: TokenStream) -> Result<TokenStream, Error> {
+    use atruct_return::{Return, ReturnFields, TargetFn};
 
-    let ret: Return = parse(fields.into()).expect("failed to parse return fields");
-    let func: Function = parse(function.clone().into()).expect("failed to parse function");
-    let struct_def = build_return_struct(&func.name, ret);
-    let fn_def = replace_marktoken_with_structname(func);
-    quote!(
-        #struct_def
-        #fn_def
+    Ok(
+        Return {
+            fields: parse2::<ReturnFields>(fields)?,
+            target: parse2::<TargetFn>(function)?,
+        }.interpret().build()
     )
 }

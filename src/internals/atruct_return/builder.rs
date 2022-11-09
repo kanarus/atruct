@@ -1,67 +1,19 @@
-use proc_macro2::{TokenStream, Ident, TokenTree};
-use quote::{format_ident, quote};
+use quote::quote;
 
-use super::parser::{Function, Return};
+use crate::internals::Build;
 
-pub fn build_return_struct(func_name: &Ident, ret: Return) -> TokenStream {
-    let name = get_struct_name(func_name);
+use super::interpreter::ReturnStreams;
 
-    let mut fields = TokenStream::new();
-    for field in ret.fields {
-        let (field_name, field_type) = (field.name, field.typexp);
-        fields.extend(quote!(
-            #field_name: #field_type,
-        ))
+impl Build for ReturnStreams {
+    fn build(self) -> proc_macro2::TokenStream {
+        let ReturnStreams{
+            struct_stream,
+            function_stream
+        } = self;
+        
+        quote!(
+            #struct_stream
+            #function_stream
+        )
     }
-
-    quote!(
-        struct #name {#fields}
-    )
-}
-
-pub fn replace_marktoken_with_structname(func: Function) -> TokenStream {
-    let fn_name = &func.name;
-    let struct_name = get_struct_name(&fn_name);
-
-    let mut replcaed_body = TokenStream::new();
-    let mut body = func.body.into_iter();
-    while let Some(tt) = body.next() {
-        replcaed_body.extend(match &tt {
-            TokenTree::Punct(p) if p.as_char()=='%' => quote!(#struct_name),
-            _ => quote!(#tt)
-        })
-    }
-
-    let mut args_stream = TokenStream::new();
-    for field in func.args {
-        let (field_name, field_type) = (field.name, field.typexp);
-        args_stream.extend(quote!(
-            #field_name: #field_type, 
-        ))
-    }
-
-    quote!(
-        fn #fn_name(#args_stream) -> #struct_name {
-            type Return = #struct_name;
-            #replcaed_body
-        }
-    )
-}
-
-
-
-fn get_struct_name(func_name: &Ident) -> Ident {
-    let mut struct_name = String::new();
-
-    let func_name = func_name.to_string();
-    let mut func_name = func_name.chars();
-    let mut flag = true;
-    while let Some(c) = func_name.next() {
-        if c == '_' {flag = true}
-        else {struct_name.push(
-            if flag {flag = false; c.to_ascii_uppercase()} else {c}
-        )}
-    }
-
-    format_ident!("{}", struct_name)
 }
