@@ -48,6 +48,7 @@ impl Interpret<ReturnStreams> for Return {
             if let Some(_unsafe) = taget._unsafe {
                 _unsafe.to_tokens(&mut signature)
             }
+            taget._fn.to_tokens(&mut signature);
             taget.name.to_tokens(&mut signature);
             if let Some(generics) = taget.generics {
                 generics.to_tokens(&mut signature)
@@ -55,6 +56,7 @@ impl Interpret<ReturnStreams> for Return {
 
             quote!(
                 #signature(#args) -> #struct_name {
+                    type Return = #struct_name;
                     #body
                 }
             )
