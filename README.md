@@ -92,7 +92,7 @@ use atruct::withReturn;
 fn main() {
     let abc = T::get_abc();
     println!("abc: {{a: {}, b: {}, c: {:?}}}", abc.a, abc.b, abc.c);
-    // abc: {a: 0, b: string, c: [1, 0, -1, 0]}
+    // abc: {a: 0, b: I am b, c: [1, 0, -1, 0]}
 }
 
 struct T;
@@ -102,7 +102,7 @@ impl T {
     fn get_abc() {
         Return {
             a: 0,
-            b: "string".into(),
+            b: "I am b".into(),
             c: vec![1, 0, -1, 0],
         }
     }
@@ -113,4 +113,4 @@ impl T {
 <br/>
 
 - As you see, you don't need to `use atruct::Return` just to write `#[Return]` in `impl` blocks.
-- Current `#[withReturn]` generates structs in completely the same way as normal `#[Return]`, meaning **all functions** that use `#[Return]` have to unique names to each others (This problem will be fixed in a few days).
+- Current `#[withReturn]` generates structs in completely the same way as normal `#[Return]`, meaning **all functions** using `#[Return]` have to have **unique names** to each others (This problem will be fixed in a few days).
