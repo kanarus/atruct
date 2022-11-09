@@ -77,5 +77,15 @@ pub fn atruct(stream: TokenStream) -> TokenStream {
 #[proc_macro_attribute]
 #[allow(non_snake_case)]
 pub fn Return(fields: TokenStream, function: TokenStream) -> TokenStream {
-    internals::Return(fields.into(), function.into()).into()
+    internals::Return(fields.into(), function.into())
+        .unwrap_or_else(|e| e.into_compile_error())
+        .into()
+}
+
+#[proc_macro_attribute]
+#[allow(non_snake_case)]
+pub fn withReturn(_: TokenStream, impl_block: TokenStream) -> TokenStream {
+    internals::withReturn(impl_block.into())
+        .unwrap_or_else(|e| e.into_compile_error())
+        .into()
 }

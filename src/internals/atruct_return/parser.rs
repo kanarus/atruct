@@ -1,85 +1,44 @@
-use proc_macro2::{Ident, TokenStream};
-use syn::{punctuated::Punctuated, token::{Comma, Colon, Fn, Paren, Brace, Mut}, Type, parse::Parse, parenthesized, braced};
+use syn::{parse::Parse, Attribute, parenthesized, FnArg, braced};
+use super::{ReturnFields, ReturnField, TargetFn, WithReturn};
 
 
-pub struct Return {
-    pub fields: Punctuated<Field, Comma>
+impl Parse for WithReturn {
+    fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
+        Ok(Self(input.parse()?))
+    }
 }
-pub struct Function {
-    _fn:      Fn,
-    pub name: Ident,
-    _paren:   Paren,
-    pub args: Punctuated<Field, Comma>,
-    // _arrow:   RArrow,
-    // _mark:    Rem,
-    _brace:   Brace,
-    pub body: TokenStream,
+
+
+impl Parse for ReturnFields {
+    fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
+        Ok(Self(input.parse_terminated(ReturnField::parse)?))
+    }
 }
-pub struct Field {
-    _mut:       Option<Mut>,  
-    pub name:   Ident,
-    _colon:     Colon,
-    pub typexp: Type,
-}
-impl Parse for Return {
+impl Parse for ReturnField {
     fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
         Ok(Self {
-            fields: input.parse_terminated(Field::parse)?
+            name:   input.parse()?,
+            _colon: input.parse()?,
+            typexp: input.parse()?
         })
     }
 }
-impl Parse for Function {
+
+impl Parse for TargetFn {
     fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
         let (args_buf, body_buf);
         Ok(Self {
-            _fn:    input.parse()?,
-            name:   input.parse()?,
-            _paren: parenthesized!(args_buf in input),
-            args:   args_buf.parse_terminated(Field::parse)?,
-            // _arrow: input.parse()?,
-            // _mark:   input.parse()?,
-            _brace: braced!(body_buf in input),
-            body:   {
-                // let mut replcaed_body = TokenStream::new();
-
-                body_buf.parse()?
-                // body_buf.step(|corsor| {
-                //     let mut rest = *corsor;
-                //     while let Some((tt, next)) = rest.token_tree() {
-                //         replcaed_body.extend(quote!(#tt));
-                //     }
-                //     return Ok(((), Cursor::empty()))
-                //     
-                // }).expect("failed to parse function");
-
-                // replcaed_body
-            }
-/*
-fn skip_past_next_at(input: ParseStream) -> Result<()> {
-    input.step(|cursor| {
-        let mut rest = *cursor;
-        while let Some((tt, next)) = rest.token_tree() {
-            match &tt {
-                TokenTree::Punct(punct) if punct.as_char() == '@' => {
-                    return Ok(((), next));
-                }
-                _ => rest = next,
-            }
-        }
-        Err(cursor.error("no `@` was found after this point"))
-    })
-}
-*/
-        })
-    }
-}
-impl Parse for Field {
-    fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
-        Ok(Self {
-            _mut:   input.parse()?,
-            name:   input.parse()?,
-            _colon: input.parse()?,
-            typexp: input.parse()?,
+            attrs:    input.call(Attribute::parse_inner)?,
+            vis:      input.parse()?,
+            _async:   input.parse()?,
+            _unsafe:  input.parse()?,
+            _fn:      input.parse()?,
+            name:     input.parse()?,
+            generics: input.parse()?,
+            _paren:   parenthesized!(args_buf in input),
+            args:     args_buf.parse_terminated(FnArg::parse)?,
+            _brace:   braced!(body_buf in input),
+            body:     body_buf.parse()?,
         })
     }
 }
